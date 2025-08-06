@@ -1,8 +1,7 @@
 "use client";
-import { Ascii, Button, Typography } from "@/components";
+import { Ascii, cn, Typography } from "@/components";
 import { useNavigatorInfo } from "@/hooks";
 import {
-  AnimatePresence,
   motion,
   useMotionValueEvent,
   useScroll,
@@ -12,78 +11,115 @@ import { useRef, useState } from "react";
 
 export default function Hero() {
   const container = useRef<HTMLDivElement>(null);
+
   const [textEnd, setTextEnd] = useState(false);
-  const { scrollYProgress, scrollY } = useScroll({
-    container,
+  const { scrollYProgress } = useScroll({
+    target: container,
+    offset: ["start end", "end end"],
   });
   const info = useNavigatorInfo();
-  const x = useTransform(scrollYProgress, [0, 1], [0, 500]);
+  const scaleY = useTransform(scrollYProgress, [0.25, 0.4], [0.08, 3]);
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    console.log("Page scroll: ", latest);
+  const textSectionWidth = useTransform(
+    scrollYProgress,
+    [0.4, 0.5],
+    ["100%", "0%"],
+  );
+  const textSectionOpacity = useTransform(scrollYProgress, [0.4, 0.45], [1, 0]);
+  const filterValue = useTransform(scrollYProgress, [0.4, 0.5], [0, 1]);
+
+  const testSectionWidth = useTransform(
+    scrollYProgress,
+    [0.45, 0.5],
+    ["0%", "100%"],
+  );
+  const testSectionOpacity = useTransform(scrollYProgress, [0.45, 0.5], [0, 1]);
+
+  const filter = useTransform(filterValue, (v) => {
+    return `grayscale(${100 - v * 100}%)`;
+  });
+
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (latest >= 0.25) {
+      setIsAnimating(false);
+    } else {
+      setIsAnimating(true);
+    }
   });
 
   return (
-    <div>
-      <AnimatePresence>
-        <div
-          key={"ekosdf"}
-          className={
-            "relative container mx-auto min-h-[100dvh] m-8 flex flex-col justify-center items-center"
-          }
-        >
-          <div className={"max-w-80"}>
-            <Typography variant={"h1"}>Hello Visitor</Typography>
+    <div
+      className={"relative container mx-auto h-[400dvh] m-8 flex gap-8"}
+      ref={container}
+    >
+      <motion.div
+        style={{ width: textSectionWidth, opacity: textSectionOpacity }}
+      >
+        <div>
+          <Typography variant={"h1"}>Hello Visitor</Typography>
 
-            <Typography variant={"h3"}>Analysing user data:</Typography>
+          <Typography variant={"h3"}>Analysing user data:</Typography>
 
-            <Typography
-              variant={"body1"}
-              scrambleProps={{ onAnimationEnd: () => setTextEnd(true) }}
-            >
-              {Object.entries(info).map(([key, value]) => `${key}: ${value}`)}
-            </Typography>
-
-            <div className={"h-[300vh]"} ref={container}>
-              {/*{textEnd && (*/}
-              <motion.div
-                className={"sticky top-8 flex justify-center mt-8"}
-                style={{ x }}
-              >
-                <Ascii
-                  video={"/eye.mp4"}
-                  fps={15}
-                  width={200}
-                  height={200}
-                  slotProps={{
-                    wrapperProps: {
-                      className: "grayscale-100",
-                    },
-                    videoProps: { loop: true },
-                  }}
-                />
-              </motion.div>
-              {/*)}*/}
-            </div>
-          </div>
+          <Typography
+            scrambleProps={{ onAnimationEnd: () => setTextEnd(true) }}
+          >
+            {Object.entries(info).map(([key, value]) => `${key}: ${value}`)}
+          </Typography>
         </div>
-        <footer className={"fixed bottom-0 left-0"}>
-          <div className={"flex flex-col"}>
-            <Button
-              label={"Click Me"}
-              onClick={() => {
-                console.log(info);
-              }}
-            />
-            <Button
-              label={"Click Me"}
-              onClick={() => {
-                console.log("clicked");
-              }}
-            />
-          </div>
-        </footer>
-      </AnimatePresence>
+
+        <div className={"relative mt-16 h-[50vh]"}>
+          <motion.div className={"sticky top-8"}>
+            <motion.div
+              className={cn(isAnimating && "animate-blink")}
+              style={{ scaleY }}
+            >
+              <Typography variant={"h3"}>Keep on rolling baby:</Typography>
+            </motion.div>
+            <div className={"mt-10"}>
+              <Typography scrambleProps={{ speed: 5 }}>
+                is simply dummy text of the printing and typesetting industry.
+                Lorem Ipsum has been the industry's standard.
+              </Typography>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      <div className={"h-[200vh]"}>
+        <motion.div
+          className={"sticky top-8 flex justify-center mt-8"}
+          style={{
+            filter,
+          }}
+        >
+          <Ascii
+            video={"/eye.mp4"}
+            fps={15}
+            width={200}
+            height={200}
+            slotProps={{
+              videoProps: { loop: true },
+            }}
+          />
+        </motion.div>
+      </div>
+
+      <motion.div className={"h-[200vh]"} style={{ width: testSectionWidth }}>
+        <motion.div
+          className={"sticky top-8"}
+          style={{ opacity: testSectionOpacity }}
+        >
+          <motion.div>
+            <Typography variant={"h3"}>Keep on rolling baby:</Typography>
+          </motion.div>
+          <Typography scrambleProps={{ speed: 5 }}>
+            is simply dummy text of the printing and typesetting industry. Lorem
+            Ipsum has been the industry's standard.
+          </Typography>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

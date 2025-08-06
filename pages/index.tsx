@@ -16,6 +16,7 @@ export default function Home() {
     <div className={`${geistSans.className} ${geistMono.className} font-sans`}>
       <main className="">
         <GreetingSection />
+        {/*<Test />*/}
       </main>
     </div>
   );
